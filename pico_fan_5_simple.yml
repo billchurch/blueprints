@@ -85,11 +85,11 @@ action:
             id: "middle"
         sequence:
           - choose:
-              - conditions: '{{ light | string | trim != "" }}'
+              - conditions: '{{ light_entity | string | trim != "" }}'
                 sequence:
                   - service: light.toggle
                     target:
-                      entity_id: "{{ light }}"
+                      entity_id: "{{ light_entity }}"
             default:
               - service: fan.toggle
                 target:
