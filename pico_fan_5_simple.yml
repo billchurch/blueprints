@@ -85,13 +85,13 @@ action:
           id: 'middle'
       sequence:
         - choose:
-          - conditions:
-              - condition: template
-                value_template: '{{ light_entity | string | trim != "" }}'
-            sequence:
-              - service: light.toggle
-                target:
-                  entity_id: '{{ light_entity }}'
+            - conditions:
+                - condition: template
+                  value_template: '{{ light_entity | string | trim != "" }}'
+              sequence:
+                - service: light.toggle
+                  target:
+                    entity_id: '{{ light_entity }}'
           default:
             - service: fan.toggle
               target:
