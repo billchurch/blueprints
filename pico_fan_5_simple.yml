@@ -84,12 +84,16 @@ action:
         - condition: trigger
           id: 'middle'
       sequence:
-        - service: >-
-            {{ 'light.toggle' if !input light_entity else 'fan.toggle' }}
-          target:
-            entity_id: >-
-              {{ !input light_entity if !input light_entity
-                 else !input fan_entity }}
+        - variables:
+            light: !input light_entity
+        - choose:
+            - conditions: "{{ light | length > 0 }}"
+              sequence:
+                - service: light.toggle
+                  target: { entity_id: "{{ light }}" }
+          default:
+            - service: fan.toggle
+              target: { entity_id: !input fan_entity }
 
     - conditions:
         - condition: trigger
