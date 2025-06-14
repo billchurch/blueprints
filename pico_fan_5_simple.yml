@@ -25,16 +25,6 @@ blueprint:
         entity:
           domain: light
           multiple: false
-    percentage_step:
-      name: Speed step (%)
-      default: 10
-      selector:
-        number:
-          min: 5
-          max: 50
-          step: 1
-          unit_of_measurement: '%'
-          mode: slider
 
 trigger:
   - platform: device
@@ -73,10 +63,6 @@ trigger:
     id: "off"
 
 action:
-  - variables:
-      step: !input percentage_step
-      light: !input light_entity
-
   - choose:
       - conditions:
           - condition: trigger
@@ -93,8 +79,6 @@ action:
           - service: fan.increase_speed
             target:
               entity_id: !input fan_entity
-            data:
-              percentage_step: "{{ step }}"
 
       - conditions:
           - condition: trigger
@@ -118,8 +102,6 @@ action:
           - service: fan.decrease_speed
             target:
               entity_id: !input fan_entity
-            data:
-              percentage_step: "{{ step }}"
 
       - conditions:
           - condition: trigger
