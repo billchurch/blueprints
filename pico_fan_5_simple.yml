@@ -1,9 +1,9 @@
 blueprint:
-  name: Pico Fan – Simple 5-Button
+  name: Pico Fan Simple 5-Button with Long Press
   description: >
     Map a Lutron Fan Pico (PJ2-3BRL-GXX-F01) to one ceiling fan
     and an optional light.
-    Single presses only – no long-press or double-click logic.
+    Single presses control fan speed, long presses on up/down control light brightness.
   domain: automation
   author: billchurch
   source_url: https://community.home-assistant.io/t/pico-fan-simple-5-button-remote-for-lutron-caseta-haiku-or-any-fan/901507
@@ -25,6 +25,24 @@ blueprint:
         entity:
           domain: light
           multiple: false
+    brightness_step:
+      name: Brightness Step Percentage
+      description: How much to change brightness on each step during long press
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 25
+          unit_of_measurement: "%"
+    dimming_rate:
+      name: Dimming Rate (ms)
+      description: How fast to change brightness during long press
+      default: 200
+      selector:
+        number:
+          min: 100
+          max: 1000
+          unit_of_measurement: "ms"
 
 trigger:
   - platform: device
@@ -62,8 +80,17 @@ trigger:
     subtype: 'off'
     id: 'off'
 
+variables:
+  fan: !input fan_entity
+  light: !input light_entity
+  step_pct: !input brightness_step
+  rate_ms: !input dimming_rate
+
 action:
   - choose:
+    ################################################
+    # ON BUTTON ────────────────
+    ################################################
     - conditions:
         - condition: trigger
           id: 'on'
@@ -72,14 +99,48 @@ action:
           target:
             entity_id: !input fan_entity
 
-    - conditions:
-        - condition: trigger
-          id: 'up'
+    ################################################
+    # RAISE (Up) ────────────────
+    ################################################
+    - conditions: "{{ trigger.id == 'up' }}"
       sequence:
-        - service: fan.increase_speed
-          target:
-            entity_id: !input fan_entity
+        # If a light is defined we need to know whether this
+        # was a *tap* or a *hold*.  Wait briefly for a release.
+        - wait_for_trigger:
+            - platform: device
+              device_id: !input pico_remote
+              domain: lutron_caseta
+              type: release
+              subtype: raise
+          timeout: "00:00:00.3"      # 300ms long-press threshold
+          continue_on_timeout: true
 
+        # SHORT PRESS → bump fan speed
+        - if: "{{ wait.trigger is not none or light|length == 0 }}"
+          then:
+            - service: fan.increase_speed
+              target: { entity_id: "{{ fan }}" }
+
+        # LONG PRESS → brighten light continuously
+          else:
+            - repeat:
+                sequence:
+                  - service: light.turn_on
+                    target: { entity_id: "{{ light }}" }
+                    data:
+                      brightness_step_pct: "{{ step_pct }}"
+                      transition: "{{ rate_ms/1000 }}"
+                  - delay:
+                      milliseconds: "{{ rate_ms | int }}"
+                until:
+                  # Stop when light reaches maximum brightness
+                  - condition: template
+                    value_template: >
+                      {{ (state_attr(light, 'brightness')|default(255)) | int >= 250 }}
+
+    ################################################
+    # MIDDLE BUTTON ────────────────
+    ################################################
     - conditions:
         - condition: trigger
           id: 'middle'
@@ -95,14 +156,46 @@ action:
             - service: fan.toggle
               target: { entity_id: !input fan_entity }
 
-    - conditions:
-        - condition: trigger
-          id: 'down'
+    ################################################
+    # LOWER (Down) ────────────────
+    ################################################
+    - conditions: "{{ trigger.id == 'down' }}"
       sequence:
-        - service: fan.decrease_speed
-          target:
-            entity_id: !input fan_entity
+        - wait_for_trigger:
+            - platform: device
+              device_id: !input pico_remote
+              domain: lutron_caseta
+              type: release
+              subtype: lower
+          timeout: "00:00:00.3"      # 300ms long-press threshold
+          continue_on_timeout: true
 
+        # SHORT PRESS → slower fan
+        - if: "{{ wait.trigger is not none or light|length == 0 }}"
+          then:
+            - service: fan.decrease_speed
+              target: { entity_id: "{{ fan }}" }
+
+        # LONG PRESS → dim light continuously
+          else:
+            - repeat:
+                sequence:
+                  - service: light.turn_on
+                    target: { entity_id: "{{ light }}" }
+                    data:
+                      brightness_step_pct: "{{ 0 - step_pct }}"
+                      transition: "{{ rate_ms/1000 }}"
+                  - delay:
+                      milliseconds: "{{ rate_ms | int }}"
+                until:
+                  # Stop when light reaches minimum brightness
+                  - condition: template
+                    value_template: >
+                      {{ (state_attr(light, 'brightness')|default(0)) | int < 5 }}
+
+    ################################################
+    # OFF BUTTON ────────────────
+    ################################################
     - conditions:
         - condition: trigger
           id: 'off'
@@ -111,4 +204,4 @@ action:
           target:
             entity_id: !input fan_entity
 
-mode: single
+mode: restart   # ensures a release event aborts the running loop
