@@ -80,22 +80,22 @@ action:
             target:
               entity_id: !input fan_entity
 
-- conditions:
-    - condition: trigger
-      id: "middle"
-  sequence:
-    - choose:
-        - conditions:
-            - condition: template
-              value_template: '{{ light_entity | string | trim != "" }}'
-          sequence:
-            - service: light.toggle
-              target:
-                entity_id: "{{ light_entity }}"
-      default:
-        - service: fan.toggle
-          target:
-            entity_id: !input fan_entity
+      - conditions:
+          - condition: trigger
+            id: "middle"
+        sequence:
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: '{{ light_entity | string | trim != "" }}'
+                sequence:
+                  - service: light.toggle
+                    target:
+                      entity_id: "{{ light_entity }}"
+            default:
+              - service: fan.toggle
+                target:
+                  entity_id: !input fan_entity
 
       - conditions:
           - condition: trigger
