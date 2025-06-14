@@ -85,7 +85,7 @@ action:
             id: "middle"
         sequence:
           - choose:
-              - conditions: "{{ light | length > 0 }}"
+              - conditions: '{{ light | string | trim != "" }}'
                 sequence:
                   - service: light.toggle
                     target:
