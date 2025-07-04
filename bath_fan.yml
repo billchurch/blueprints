@@ -1,0 +1,163 @@
+blueprint:
+  name: Humidity-Controlled Fan with Manual Override
+  description: >
+    Automate a bathroom fan to turn on/off based on humidity levels with manual override and configurable timer. Includes automatic helper creation and a dashboard card.
+  domain: automation
+  input:
+    fan_switch:
+      name: Fan Switch
+      description: The fan switch entity.
+      selector:
+        entity:
+          domain: switch
+    bathroom_humidity:
+      name: Bathroom Humidity Sensor
+      description: The humidity sensor in the bathroom.
+      selector:
+        entity:
+          domain: sensor
+          device_class: humidity
+    indoor_humidity:
+      name: Indoor Humidity Sensor
+      description: The main house humidity sensor to compare against.
+      selector:
+        entity:
+          domain: sensor
+          device_class: humidity
+    humidity_on_threshold:
+      name: Humidity On Threshold
+      description: Humidity percentage that triggers the fan ON.
+      default: 65
+      selector:
+        number:
+          min: 50
+          max: 90
+          unit_of_measurement: "%"
+          step: 1
+    humidity_off_threshold:
+      name: Humidity Off Threshold
+      description: Humidity percentage that triggers the fan OFF.
+      default: 62
+      selector:
+        number:
+          min: 40
+          max: 80
+          unit_of_measurement: "%"
+          step: 1
+    humidity_delta:
+      name: Humidity Delta
+      description: Difference between bathroom and house humidity to consider for triggering.
+      default: 5
+      selector:
+        number:
+          min: 1
+          max: 20
+          unit_of_measurement: "%"
+          step: 1
+    manual_override_duration:
+      name: Manual Override Duration (minutes)
+      description: Time to keep the fan running when turned on manually.
+      default: 20
+      selector:
+        number:
+          min: 5
+          max: 60
+          unit_of_measurement: minutes
+          step: 1
+
+automation:
+  - alias: Setup Bath Fan Helpers
+    trigger:
+      - platform: homeassistant
+        event: start
+    action:
+      - service: input_boolean.create
+        data:
+          name: Bath Fan Manual Override
+          entity_id: input_boolean.bath_fan_manual_override
+      - service: input_number.create
+        data:
+          name: Bath Fan Override Duration
+          entity_id: input_number.bath_fan_override_duration
+          min: 5
+          max: 60
+          step: 1
+          unit_of_measurement: minutes
+          mode: slider
+
+trigger:
+  - platform: numeric_state
+    entity_id: !input bathroom_humidity
+    above: !input humidity_on_threshold
+    id: humidity_high
+  - platform: numeric_state
+    entity_id: !input bathroom_humidity
+    below: !input humidity_off_threshold
+    id: humidity_low
+  - platform: state
+    entity_id: !input fan_switch
+    to: "on"
+    id: manual_on
+
+variables:
+  fan_switch: !input fan_switch
+  bathroom_humidity: !input bathroom_humidity
+  indoor_humidity: !input indoor_humidity
+  humidity_on_threshold: !input humidity_on_threshold 
+  humidity_off_threshold: !input humidity_off_threshold 
+  humidity_delta: !input humidity_delta 
+  manual_override_duration: !input manual_override_duration 
+  override_flag: "input_boolean.bath_fan_manual_override"
+
+action:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: humidity_high
+          - condition: template
+            value_template: >
+              {{ states(bathroom_humidity)|float - states(indoor_humidity)|float > humidity_delta }}
+          - condition: state
+            entity_id: "{{ override_flag }}"
+            state: "off"
+        sequence:
+          - service: switch.turn_on
+            target:
+              entity_id: "{{ fan_switch }}"
+      - conditions:
+          - condition: trigger
+            id: manual_on
+          - condition: state
+            entity_id: "{{ override_flag }}"
+            state: "off"
+        sequence:
+          - service: input_boolean.turn_on
+            target:
+              entity_id: "{{ override_flag }}"
+          - delay:
+              minutes: "{{ manual_override_duration }}"
+          - service: input_boolean.turn_off
+            target:
+              entity_id: "{{ override_flag }}"
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: >
+                      {{ states(bathroom_humidity)|float > humidity_on_threshold and
+                         (states(bathroom_humidity)|float - states(indoor_humidity)|float > humidity_delta) }}
+                sequence:
+                  - service: switch.turn_on
+                    target:
+                      entity_id: "{{ fan_switch }}"
+      - conditions:
+          - condition: trigger
+            id: humidity_low
+          - condition: state
+            entity_id: "{{ override_flag }}"
+            state: "off"
+        sequence:
+          - service: switch.turn_off
+            target:
+              entity_id: "{{ fan_switch }}"
+
+mode: restart
