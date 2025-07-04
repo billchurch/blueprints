@@ -3,6 +3,8 @@ blueprint:
   description: >
     Automate a bathroom fan to turn on/off based on humidity levels with optional manual override and configurable timer. Supports optional input_boolean and input_number helpers for user control from a dashboard.
   domain: automation
+  author: billchurch
+  source_url: https://github.com/billchurch/ha-blueprints/blob/main/bath_fan.yml
   input:
     fan_switch:
       name: Fan Switch

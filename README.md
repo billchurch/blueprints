@@ -1,10 +1,8 @@
 # Home Assistant Blueprints
+
 ## Pico Fan – Simple 5-Button
 
-<a href="https://github.com/user-attachments/assets/a84b5c26-0ceb-466c-8867-16a8ad78388e" target="_blank" rel="noopener noreferrer">
-  <img src="https://github.com/user-attachments/assets/cf32fe42-f5b9-4c31-a494-aec0eef93773"
-       alt="lutron-pico-5-sm" />
-</a>
+[![lutron-pico-5-sm](https://github.com/user-attachments/assets/cf32fe42-f5b9-4c31-a494-aec0eef93773)](https://github.com/user-attachments/assets/a84b5c26-0ceb-466c-8867-16a8ad78388e)
 
 This Home Assistant blueprint allows you to control a ceiling fan and optional light using a Lutron Pico 5-button remote (model PJ2-3BRL-GXX-F01). The blueprint supports both single presses for fan control and long presses for light dimming.
 
@@ -169,6 +167,7 @@ This automation uses humidity sensors to control a fan with a manual override an
    - Input Number: `input_number.bath_fan_override_duration` (min: 5, max: 60)
 
 2. In your dashboard (Lovelace):
+
 ```yaml
    type: entities
    title: Bath Fan Control
@@ -190,5 +189,7 @@ This automation uses humidity sensors to control a fan with a manual override an
 6. Set thresholds and duration as needed.
 
 ✅ When a user manually turns on the fan, it will run for the configured time and not conflict with humidity automation.
+
 ✅ When humidity rises above threshold, the fan will auto-turn on if override is inactive.
+
 ✅ When humidity drops below threshold, the fan will auto-turn off unless in override.
