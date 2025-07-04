@@ -150,14 +150,14 @@ action:
                   - service: input_boolean.turn_off
                     target:
                       entity_id: "{{ manual_override_flag }}"
+          # 🚦 Check humidity before turning fan off
           - choose:
               - conditions:
                   - condition: template
                     value_template: >
-                      {{ states(bathroom_humidity)|float > humidity_on_threshold and
-                         (states(bathroom_humidity)|float - states(indoor_humidity)|float > humidity_delta) }}
+                      {{ states(bathroom_humidity)|float < humidity_on_threshold }}
                 sequence:
-                  - service: switch.turn_on
+                  - service: switch.turn_off
                     target:
                       entity_id: "{{ fan_switch }}"
 
