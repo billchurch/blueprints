@@ -3,8 +3,6 @@ blueprint:
   description: >
     Automate a bathroom fan to turn on/off based on humidity levels with optional manual override and configurable timer. Supports optional input_boolean and input_number helpers for user control from a dashboard.
   domain: automation
-  author: billchurch
-  source_url: https://github.com/billchurch/ha-blueprints/blob/main/bath_fan.yml
   input:
     fan_switch:
       name: Fan Switch
@@ -117,13 +115,9 @@ action:
           - condition: template
             value_template: >
               {{ states(bathroom_humidity)|float - states(indoor_humidity)|float > humidity_delta }}
-          - condition: or
-            conditions:
-              - condition: template
-                value_template: "{{ manual_override_flag == none }}"
-              - condition: state
-                entity_id: "{{ manual_override_flag }}"
-                state: "off"
+          - condition: template
+            value_template: >
+              {{ manual_override_flag is none or is_state(manual_override_flag, 'off') }}
         sequence:
           - service: switch.turn_on
             target:
@@ -133,13 +127,9 @@ action:
       - conditions:
           - condition: trigger
             id: manual_on
-          - condition: or
-            conditions:
-              - condition: template
-                value_template: "{{ manual_override_flag == none }}"
-              - condition: state
-                entity_id: "{{ manual_override_flag }}"
-                state: "off"
+          - condition: template
+            value_template: >
+              {{ manual_override_flag is none or is_state(manual_override_flag, 'off') }}
         sequence:
           - choose:
               - conditions:
@@ -175,13 +165,9 @@ action:
       - conditions:
           - condition: trigger
             id: humidity_low
-          - condition: or
-            conditions:
-              - condition: template
-                value_template: "{{ manual_override_flag == none }}"
-              - condition: state
-                entity_id: "{{ manual_override_flag }}"
-                state: "off"
+          - condition: template
+            value_template: >
+              {{ manual_override_flag is none or is_state(manual_override_flag, 'off') }}
         sequence:
           - service: switch.turn_off
             target:
