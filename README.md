@@ -159,3 +159,36 @@ For issues or questions:
 - Check the [Home Assistant Community Forum](https://community.home-assistant.io/t/pico-fan-simple-5-button-remote-for-lutron-caseta-haiku-or-any-fan/901507)
 - Review the [Lutron Caseta Integration Documentation](https://www.home-assistant.io/integrations/lutron_caseta/)
 - Consult the [Home Assistant Blueprint Documentation](https://www.home-assistant.io/docs/blueprint/)
+
+## Bath Fan Automation
+
+This automation uses humidity sensors to control a fan with a manual override and timer.
+
+1. Add two helpers in Home Assistant (if setting up mutiple bath fans be sure to give each helper a unique name for that bathroom):
+   - Input Boolean: `input_boolean.bath_fan_manual_override`
+   - Input Number: `input_number.bath_fan_override_duration` (min: 5, max: 60)
+
+2. In your dashboard (Lovelace):
+```yaml
+   type: entities
+   title: Bath Fan Control
+   entities:
+     - entity: switch.guest_bathroom_exhaust_fan
+       name: Fan Switch
+     - entity: input_boolean.bath_fan_manual_override
+       name: Manual Override Active
+     - entity: input_number.bath_fan_override_duration
+       name: Override Duration (minutes)
+```
+
+3. Import this blueprint and create an automation.
+
+4. Select your fan switch and humidity sensors.
+
+5. Optionally point to the helpers above.
+
+6. Set thresholds and duration as needed.
+
+✅ When a user manually turns on the fan, it will run for the configured time and not conflict with humidity automation.
+✅ When humidity rises above threshold, the fan will auto-turn on if override is inactive.
+✅ When humidity drops below threshold, the fan will auto-turn off unless in override.
