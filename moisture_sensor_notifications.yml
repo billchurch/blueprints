@@ -118,6 +118,9 @@ action:
         channel: moisture_alerts
         ttl: 0
         priority: high
+        persistent: true
+        sticky: true
+        clickAction: "/lovelace/{{ area_name(trigger.entity_id) | lower | replace(' ', '-') | default('home', true) }}"
         actions: >
           {% if enable_actions %}
             [{
