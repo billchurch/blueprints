@@ -1,0 +1,148 @@
+blueprint:
+  name: Moisture Sensor Notifications
+  description: >
+    Send notifications when any sensor with device_class "moisture" detects moisture.
+    Automatically monitors all moisture sensors in your system and notifies selected targets.
+  domain: automation
+  author: billchurch
+  source_url: https://github.com/billchurch/ha-blueprints
+  input:
+    notify_targets:
+      name: Notification Targets
+      description: Select notification services to send alerts to (e.g., notify.mobile_app_phone)
+      selector:
+        target:
+          entity:
+            - domain: notify
+    notification_title:
+      name: Notification Title
+      description: Title for the moisture detection notification
+      default: "Moisture Detected!"
+      selector:
+        text:
+    notification_message:
+      name: Notification Message Template
+      description: >
+        Message template for notifications. Available variables:
+        - {{ trigger.to_state.name }} - Sensor friendly name
+        - {{ trigger.entity_id }} - Sensor entity ID
+        - {{ trigger.to_state.state }} - Current state
+        - {{ area_name(trigger.entity_id) }} - Area where sensor is located
+      default: "Moisture detected by {{ trigger.to_state.name }} in {{ area_name(trigger.entity_id) | default('Unknown Location', true) }}"
+      selector:
+        text:
+          multiline: true
+    moisture_threshold:
+      name: Moisture Threshold
+      description: >
+        Only trigger when moisture sensor state is above this value. 
+        Set to 0 to trigger on any "on" state or wet detection.
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
+          mode: slider
+    notification_actions:
+      name: Enable Actionable Notifications
+      description: Add action buttons to notifications (iOS/Android)
+      default: false
+      selector:
+        boolean:
+    repeat_notifications:
+      name: Repeat Notifications
+      description: Continue sending notifications while moisture is detected
+      default: false
+      selector:
+        boolean:
+    repeat_interval:
+      name: Repeat Interval (minutes)
+      description: How often to repeat notifications if enabled
+      default: 30
+      selector:
+        number:
+          min: 5
+          max: 1440
+          unit_of_measurement: "minutes"
+          mode: slider
+
+trigger:
+  - platform: state
+    entity_id: sensor.*
+    to: ~
+    variables:
+      is_moisture_sensor: >
+        {{ state_attr(trigger.entity_id, 'device_class') == 'moisture' }}
+      is_wet: >
+        {% set state = trigger.to_state.state %}
+        {% if state in ['on', 'wet', 'moisture'] %}
+          true
+        {% elif state not in ['off', 'dry', 'unavailable', 'unknown'] and moisture_threshold | float > 0 %}
+          {{ state | float(0) > moisture_threshold | float }}
+        {% else %}
+          false
+        {% endif %}
+
+condition:
+  - condition: template
+    value_template: "{{ is_moisture_sensor and is_wet }}"
+  - condition: template
+    value_template: >
+      {{ trigger.from_state.state != trigger.to_state.state }}
+
+variables:
+  notify_targets: !input notify_targets
+  notification_title: !input notification_title
+  notification_message: !input notification_message
+  moisture_threshold: !input moisture_threshold
+  notification_actions: !input notification_actions
+  repeat_notifications: !input repeat_notifications
+  repeat_interval: !input repeat_interval
+
+action:
+  - repeat:
+      sequence:
+        - service: notify.notify
+          target: !input notify_targets
+          data:
+            title: "{{ notification_title }}"
+            message: "{{ notification_message }}"
+            data:
+              tag: "moisture_{{ trigger.entity_id }}"
+              group: "moisture_alerts"
+              importance: high
+              channel: moisture_alerts
+              ttl: 0
+              priority: high
+              actions: >
+                {% if notification_actions %}
+                  [
+                    {
+                      "action": "ACKNOWLEDGE_{{ trigger.entity_id }}",
+                      "title": "Acknowledge",
+                      "icon": "sfsymbols:checkmark.circle"
+                    },
+                    {
+                      "action": "VIEW_{{ trigger.entity_id }}",
+                      "title": "View Sensor",
+                      "icon": "sfsymbols:chart.line.uptrend.xyaxis",
+                      "uri": "/lovelace/{{ area_name(trigger.entity_id) | lower | replace(' ', '-') | default('home', true) }}"
+                    }
+                  ]
+                {% else %}
+                  []
+                {% endif %}
+        - condition: template
+          value_template: "{{ repeat_notifications }}"
+        - delay:
+            minutes: "{{ repeat_interval }}"
+        - condition: state
+          entity_id: "{{ trigger.entity_id }}"
+          state: "{{ trigger.to_state.state }}"
+      until:
+        - condition: template
+          value_template: "{{ not repeat_notifications }}"
+
+mode: parallel
+max: 10
