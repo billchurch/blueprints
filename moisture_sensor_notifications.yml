@@ -139,9 +139,9 @@ action:
           value_template: "{{ repeat_notifications }}"
         - delay:
             minutes: "{{ repeat_interval }}"
-        - condition: state
-          entity_id: "{{ trigger.entity_id }}"
-          state: "{{ trigger.to_state.state }}"
+        - condition: template
+          value_template: >
+            {{ states(trigger.entity_id) == trigger.to_state.state }}
       until:
         - condition: template
           value_template: "{{ not repeat_notifications }}"
