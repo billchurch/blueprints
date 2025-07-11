@@ -1,7 +1,56 @@
 blueprint:
   name: Humidity-Controlled Fan with Manual Override
   description: >
-    Automate a bathroom fan to turn on/off based on humidity levels with optional manual override and configurable timer. Supports optional input_boolean and input_number helpers for user control from a dashboard.
+    # 💨 Bath Fan Automation
+    
+    **Version: 1.0**
+    
+    Smart bathroom fan control based on humidity with manual override support.
+    
+    <details>
+    <summary><b>Features:</b> - Click here to expand</summary>
+
+
+      - Automatic humidity-based fan control
+      - Manual override with configurable timer
+      - Compares bathroom vs house humidity
+      - Smart delta threshold detection
+      - Dashboard control via helpers (optional)
+      - Prevents conflicts between manual and auto control
+
+    </details>
+    
+    <details>
+    <summary><b>Setup Help:</b> - Click here to expand</summary>
+
+
+      **Required Helpers (Optional but Recommended):**
+      
+      1. Create an Input Boolean for manual override tracking:
+         - Go to Settings → Devices & Services → Helpers
+         - Click "Create Helper" → Toggle
+         - Name: "Bath Fan Manual Override" (or similar)
+         
+      2. Create an Input Number for override duration:
+         - Click "Create Helper" → Number
+         - Name: "Bath Fan Override Duration"
+         - Min: 5, Max: 60, Step: 1
+         - Unit: minutes
+         
+      **Dashboard Card Example:**
+      ```yaml
+      type: entities
+      title: Bath Fan Control
+      entities:
+        - entity: switch.bathroom_exhaust_fan
+          name: Fan Switch
+        - entity: input_boolean.bath_fan_manual_override
+          name: Manual Override Active
+        - entity: input_number.bath_fan_override_duration
+          name: Override Duration (minutes)
+      ```
+
+    </details>
   domain: automation
   input:
     fan_switch:

@@ -193,3 +193,103 @@ This automation uses humidity sensors to control a fan with a manual override an
 ✅ When humidity rises above threshold, the fan will auto-turn on if override is inactive.
 
 ✅ When humidity drops below threshold, the fan will auto-turn off unless in override.
+
+## Moisture Sensor Notifications
+
+This blueprint provides comprehensive water leak detection and alerting capabilities for your home. It monitors multiple moisture sensors and sends critical notifications through various channels when water is detected.
+
+### Features
+
+- **Multi-Sensor Monitoring**: Monitor unlimited moisture/water leak sensors
+- **Critical iOS Notifications**: Bypass Do Not Disturb and Focus modes for urgent alerts
+- **Persistent UI Notifications**: Display alerts in Home Assistant dashboard
+- **Text-to-Speech Announcements**: Announce leaks through smart speakers
+- **Repeat Notifications**: Continue alerting until the issue is resolved
+- **Action Buttons**: Quick acknowledge and view sensor buttons in notifications
+- **Smart Detection**: Supports binary sensors and threshold-based numeric sensors
+
+### Installation
+
+[![Open your Home Assistant instance and show the blueprint import dialog with a specific blueprint pre-filled.](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fraw.githubusercontent.com%2Fbillchurch%2Fha-blueprints%2Frefs%2Fheads%2Fmain%2Fmoisture_sensor_notifications.yml)
+
+### Configuration
+
+#### Required Inputs
+
+- **Moisture Sensors**: Select all moisture/water leak sensors to monitor
+- **Notification Devices**: Choose mobile devices to receive alerts
+
+#### Optional Features
+
+- **UI Notifications**: Enable persistent notifications in Home Assistant
+- **TTS Announcements**: Configure text-to-speech alerts
+  - Select TTS service provider (e.g., Google, Cloud, Piper)
+  - Choose media players for announcements
+  - Customize announcement message
+- **iOS Interruption Level**: Set notification priority (Critical recommended)
+- **Action Buttons**: Add Acknowledge and View buttons to notifications
+- **Repeat Notifications**: Configure repeat interval for ongoing alerts
+
+### Example Configuration
+
+```yaml
+alias: Water Leak Detection
+use_blueprint:
+  path: billchurch/moisture_sensor_notifications.yml
+  input:
+    moisture_sensors:
+      - binary_sensor.leak_kitchen_sink_water_leak
+      - binary_sensor.leak_bathroom_water_leak
+      - binary_sensor.leak_washing_machine_water_leak
+    notify_devices:
+      - 4bbda73b3823a6e2dc265033dab400f6
+    interruption_level: critical
+    enable_ui_notification: true
+    enable_tts: true
+    tts_service: tts.home_assistant_cloud
+    tts_targets:
+      - media_player.living_room_speaker
+      - media_player.kitchen_speaker
+    tts_message: "Alert! Water detected!"
+    enable_actions: true
+    repeat_enabled: true
+    repeat_interval: 10
+```
+
+### Notification Features
+
+#### Mobile Notifications
+- **iOS**: Critical alerts with custom interruption levels
+- **Android**: High priority, sticky notifications
+- **Click Action**: Tap notification to navigate to sensor location
+
+#### Text-to-Speech
+- Supports all Home Assistant TTS providers
+- Multiple speaker support
+- Customizable announcement messages
+
+#### UI Notifications
+- Persistent notifications in Home Assistant dashboard
+- Unique IDs prevent duplicate notifications
+
+### Troubleshooting
+
+1. **TTS Not Working**:
+   - Ensure TTS service is properly configured
+   - Verify media players are online and accessible
+   - Check that TTS is enabled in the automation
+
+2. **No Notifications**:
+   - Verify mobile app integration is set up
+   - Check device permissions for notifications
+   - Ensure sensors are triggering properly
+
+3. **iOS Critical Alerts**:
+   - Enable critical notifications in iOS Settings → Home Assistant
+   - Ensure "Critical Alerts" permission is granted
+
+### Support
+
+For issues or questions:
+- Check the [Home Assistant Community Forum](https://community.home-assistant.io/)
+- Report issues on [GitHub](https://github.com/billchurch/ha-blueprints)

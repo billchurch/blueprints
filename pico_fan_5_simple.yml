@@ -1,9 +1,70 @@
 blueprint:
   name: Pico Fan Simple 5-Button with Long Press
   description: >
-    Map a Lutron Fan Pico (PJ2-3BRL-GXX-F01) to one ceiling fan
-    and an optional light.
-    Single presses control fan speed, long presses on up/down control light brightness.
+    # 🎛️ Lutron Pico Fan & Light Control
+    
+    **Version: 1.0**
+    
+    Control ceiling fans and optional lights with a Lutron Pico 5-button remote.
+    
+    <details>
+    <summary><b>Features:</b> - Click here to expand</summary>
+
+
+      - Single press for fan speed control
+      - Long press for continuous light dimming
+      - Middle button toggles light or fan
+      - Configurable brightness steps and dimming rate
+      - Smart speed cycling with up/down buttons
+      - Works with any Home Assistant fan entity
+
+    </details>
+    
+    <details>
+    <summary><b>Button Layout:</b> - Click here to expand</summary>
+
+
+      **Single Press Actions:**
+      - ON: Turn fan on
+      - UP: Increase fan speed
+      - MIDDLE: Toggle light (or fan if no light)
+      - DOWN: Decrease fan speed
+      - OFF: Turn fan off
+      
+      **Long Press Actions (300ms+ hold):**
+      - UP: Brighten light continuously
+      - DOWN: Dim light continuously
+
+    </details>
+    
+    <details>
+    <summary><b>Setup Help:</b> - Click here to expand</summary>
+
+
+      **Prerequisites:**
+      1. Lutron Caseta integration installed and configured
+      2. Pico remote (PJ2-3BRL-GXX-F01) paired with Caseta hub
+      3. Fan entity available in Home Assistant
+      4. Optional: Light entity for dimming control
+      
+      **Configuration Tips:**
+      - Brightness Step: Lower values = smoother dimming (default: 10%)
+      - Dimming Rate: Lower values = faster dimming (default: 200ms)
+      - Long press threshold is 300ms (not configurable)
+      
+      **Example Dashboard Card:**
+      ```yaml
+      type: vertical-stack
+      cards:
+        - type: tile
+          entity: fan.bedroom_fan
+          features:
+            - type: fan-speed
+        - type: light
+          entity: light.bedroom_fan_light
+      ```
+
+    </details>
   domain: automation
   author: billchurch
   source_url: https://community.home-assistant.io/t/pico-fan-simple-5-button-remote-for-lutron-caseta-haiku-or-any-fan/901507
