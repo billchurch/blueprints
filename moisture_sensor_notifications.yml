@@ -139,9 +139,9 @@ action:
         sequence:
           - repeat:
               while:
-                - condition: state
-                  entity_id: "{{ trigger.entity_id }}"
-                  state: "{{ trigger.to_state.state }}"
+                - condition: template
+                  value_template: >
+                    {{ is_state(trigger.entity_id, trigger.to_state.state) }}
               sequence:
                 - repeat:
                     for_each: "{{ notify_devices }}"
