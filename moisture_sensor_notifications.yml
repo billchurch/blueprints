@@ -3,7 +3,7 @@ blueprint:
   description: >
     # 💧 Moisture Sensor Notifications
     
-    **Version: 1.0**
+    **Version: 1.1**
     
     Send critical alerts when moisture sensors detect water leaks.
     
@@ -240,7 +240,7 @@ action:
                 - choose:
                     - conditions:
                         - condition: template
-                          value_template: "{{ enable_tts and tts_targets | length > 0 and tts_service }}"
+                          value_template: "{{ enable_tts }}"
                       sequence:
                         - action: tts.speak
                           target:
@@ -272,7 +272,7 @@ action:
       - choose:
           - conditions:
               - condition: template
-                value_template: "{{ enable_tts and tts_targets | length > 0 and tts_service }}"
+                value_template: "{{ enable_tts }}"
             sequence:
               - action: tts.speak
                 target:
