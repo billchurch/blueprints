@@ -74,7 +74,12 @@ trigger:
 condition:
   - condition: template
     value_template: >
-      {{ trigger.event.data.entity_id.startswith('sensor.') }}
+      {{ trigger.event.data.entity_id is defined and 
+         trigger.event.data.entity_id.startswith('sensor.') }}
+  - condition: template
+    value_template: >
+      {{ trigger.event.data.new_state is defined and
+         trigger.event.data.old_state is defined }}
   - condition: template
     value_template: >
       {{ state_attr(trigger.event.data.entity_id, 'device_class') == 'moisture' }}
@@ -102,50 +107,89 @@ variables:
   repeat_interval: !input repeat_interval
 
 action:
-  - repeat:
-      sequence:
-        - repeat:
-            for_each: !input notify_targets
-            sequence:
-              - service: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | regex_replace('[^a-zA-Z0-9_]', '_') | lower }}"
-                data:
-                  title: "{{ notification_title }}"
-                  message: "{{ notification_message }}"
+  - variables:
+      devices: !input notify_targets
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ repeat_notifications }}"
+        sequence:
+          - repeat:
+              while:
+                - condition: template
+                  value_template: >
+                    {{ states(trigger.event.data.entity_id) == trigger.event.data.new_state.state }}
+              sequence:
+                - repeat:
+                    for_each: "{{ devices }}"
+                    sequence:
+                      - service: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | regex_replace('[^a-zA-Z0-9_]', '_') | lower }}"
+                        data:
+                          title: "{{ notification_title }}"
+                          message: "{{ notification_message }}"
+                          data:
+                            tag: "moisture_{{ trigger.event.data.entity_id }}"
+                            group: "moisture_alerts"
+                            importance: high
+                            channel: moisture_alerts
+                            ttl: 0
+                            priority: high
+                            actions: >
+                              {% if notification_actions %}
+                                [
+                                  {
+                                    "action": "ACKNOWLEDGE_{{ trigger.event.data.entity_id }}",
+                                    "title": "Acknowledge",
+                                    "icon": "sfsymbols:checkmark.circle"
+                                  },
+                                  {
+                                    "action": "VIEW_{{ trigger.event.data.entity_id }}",
+                                    "title": "View Sensor",
+                                    "icon": "sfsymbols:chart.line.uptrend.xyaxis",
+                                    "uri": "/lovelace/{{ area_name(trigger.event.data.entity_id) | lower | replace(' ', '-') | default('home', true) }}"
+                                  }
+                                ]
+                              {% else %}
+                                []
+                              {% endif %}
+                - delay:
+                    minutes: "{{ repeat_interval }}"
+      - conditions:
+          - condition: template
+            value_template: "{{ not repeat_notifications }}"
+        sequence:
+          - repeat:
+              for_each: "{{ devices }}"
+              sequence:
+                - service: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | regex_replace('[^a-zA-Z0-9_]', '_') | lower }}"
                   data:
-                    tag: "moisture_{{ trigger.event.data.entity_id }}"
-                    group: "moisture_alerts"
-                    importance: high
-                    channel: moisture_alerts
-                    ttl: 0
-                    priority: high
-                    actions: >
-                      {% if notification_actions %}
-                        [
-                          {
-                            "action": "ACKNOWLEDGE_{{ trigger.event.data.entity_id }}",
-                            "title": "Acknowledge",
-                            "icon": "sfsymbols:checkmark.circle"
-                          },
-                          {
-                            "action": "VIEW_{{ trigger.event.data.entity_id }}",
-                            "title": "View Sensor",
-                            "icon": "sfsymbols:chart.line.uptrend.xyaxis",
-                            "uri": "/lovelace/{{ area_name(trigger.event.data.entity_id) | lower | replace(' ', '-') | default('home', true) }}"
-                          }
-                        ]
-                      {% else %}
-                        []
-                      {% endif %}
-        - condition: template
-          value_template: "{{ repeat_notifications }}"
-        - delay:
-            minutes: "{{ repeat_interval }}"
-        - condition: template
-          value_template: >
-            {{ states(trigger.event.data.entity_id) == trigger.event.data.new_state.state }}
-      until:
-        - condition: template
-          value_template: "{{ not repeat_notifications }}"
+                    title: "{{ notification_title }}"
+                    message: "{{ notification_message }}"
+                    data:
+                      tag: "moisture_{{ trigger.event.data.entity_id }}"
+                      group: "moisture_alerts"
+                      importance: high
+                      channel: moisture_alerts
+                      ttl: 0
+                      priority: high
+                      actions: >
+                        {% if notification_actions %}
+                          [
+                            {
+                              "action": "ACKNOWLEDGE_{{ trigger.event.data.entity_id }}",
+                              "title": "Acknowledge",
+                              "icon": "sfsymbols:checkmark.circle"
+                            },
+                            {
+                              "action": "VIEW_{{ trigger.event.data.entity_id }}",
+                              "title": "View Sensor",
+                              "icon": "sfsymbols:chart.line.uptrend.xyaxis",
+                              "uri": "/lovelace/{{ area_name(trigger.event.data.entity_id) | lower | replace(' ', '-') | default('home', true) }}"
+                            }
+                          ]
+                        {% else %}
+                          []
+                        {% endif %}
 
 mode: parallel
 max: 10
