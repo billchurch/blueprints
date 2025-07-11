@@ -10,13 +10,14 @@ blueprint:
     <details>
     <summary><b>Features:</b> - Click here to expand</summary>
 
+
       - Multi-sensor monitoring with state-based triggers
       - iOS critical notifications (bypass Do Not Disturb)
       - Persistent UI notifications
       - Text-to-Speech announcements
       - Customizable repeat notifications
       - Action buttons for acknowledgment
-      
+
     </details>
 
   domain: automation
