@@ -75,6 +75,48 @@ blueprint:
           max: 1440
           unit_of_measurement: "min"
           mode: slider
+    interruption_level:
+      name: iOS Interruption Level
+      description: >
+        iOS notification interruption level.
+        Critical alerts will bypass Do Not Disturb and silent mode.
+      default: "active"
+      selector:
+        select:
+          options:
+            - label: "Passive (Minimal)"
+              value: "passive"
+            - label: "Active (Default)"
+              value: "active"
+            - label: "Time Sensitive"
+              value: "time-sensitive"
+            - label: "Critical (Bypass DND)"
+              value: "critical"
+    enable_ui_notification:
+      name: Enable UI Notification
+      description: Show persistent notification in Home Assistant UI
+      default: false
+      selector:
+        boolean:
+    enable_tts:
+      name: Enable TTS Announcements
+      description: Announce moisture detection via text-to-speech
+      default: false
+      selector:
+        boolean:
+    tts_service:
+      name: TTS Service
+      description: Text-to-speech service to use (e.g., tts.google_say)
+      default: "tts.google_say"
+      selector:
+        text:
+    tts_targets:
+      name: TTS Target Speakers
+      description: Media players for TTS announcements
+      selector:
+        entity:
+          domain: media_player
+          multiple: true
 
 trigger:
   - platform: state
@@ -108,6 +150,11 @@ variables:
   enable_actions: !input enable_actions
   repeat_enabled: !input repeat_enabled
   repeat_interval: !input repeat_interval
+  interruption_level: !input interruption_level
+  enable_ui_notification: !input enable_ui_notification
+  enable_tts: !input enable_tts
+  tts_service: !input tts_service
+  tts_targets: !input tts_targets
 
 action:
   - variables:
@@ -121,6 +168,7 @@ action:
         persistent: true
         sticky: true
         clickAction: "/lovelace/{{ area_name(trigger.entity_id) | lower | replace(' ', '-') | default('home', true) }}"
+        interruption-level: "{{ interruption_level }}"
         actions: >
           {% if enable_actions %}
             [{
@@ -154,6 +202,25 @@ action:
                           title: "{{ notification_title }}"
                           message: "{{ notification_message }}"
                           data: "{{ notification_data }}"
+                - choose:
+                    - conditions:
+                        - condition: template
+                          value_template: "{{ enable_ui_notification }}"
+                      sequence:
+                        - service: persistent_notification.create
+                          data:
+                            title: "{{ notification_title }}"
+                            message: "{{ notification_message }}"
+                            notification_id: "moisture_{{ trigger.entity_id | replace('.', '_') }}"
+                - choose:
+                    - conditions:
+                        - condition: template
+                          value_template: "{{ enable_tts and tts_targets | length > 0 }}"
+                      sequence:
+                        - service: "{{ tts_service }}"
+                          data:
+                            entity_id: "{{ tts_targets }}"
+                            message: "{{ notification_message }}"
                 - delay:
                     minutes: "{{ repeat_interval }}"
     default:
@@ -165,6 +232,25 @@ action:
                 title: "{{ notification_title }}"
                 message: "{{ notification_message }}"
                 data: "{{ notification_data }}"
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ enable_ui_notification }}"
+            sequence:
+              - service: persistent_notification.create
+                data:
+                  title: "{{ notification_title }}"
+                  message: "{{ notification_message }}"
+                  notification_id: "moisture_{{ trigger.entity_id | replace('.', '_') }}"
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ enable_tts and tts_targets | length > 0 }}"
+            sequence:
+              - service: "{{ tts_service }}"
+                data:
+                  entity_id: "{{ tts_targets }}"
+                  message: "{{ notification_message }}"
 
 mode: parallel
 max: 10
