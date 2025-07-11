@@ -181,7 +181,8 @@ action:
         persistent: true
         sticky: true
         clickAction: "/lovelace/{{ area_name(trigger.entity_id) | lower | replace(' ', '-') | default('home', true) }}"
-        interruption-level: "{{ interruption_level }}"
+        push:
+          interruption-level: "{{ interruption_level }}"
         actions: >
           {% if enable_actions %}
             [{
@@ -234,7 +235,7 @@ action:
                           target:
                             entity_id: "{{ tts_service }}"
                           data:
-                            media_player_entity_id: "{{ tts_targets }}"
+                            media_player_entity_id: "{{ tts_targets | join(', ') }}"
                             message: "{{ tts_message }}"
                 - delay:
                     minutes: "{{ repeat_interval }}"
@@ -266,7 +267,7 @@ action:
                 target:
                   entity_id: "{{ tts_service }}"
                 data:
-                  media_player_entity_id: "{{ tts_targets }}"
+                  media_player_entity_id: "{{ tts_targets | join(', ') }}"
                   message: "{{ tts_message }}"
 
 mode: parallel
