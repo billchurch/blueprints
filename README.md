@@ -16,20 +16,6 @@ A collection of automation blueprints for Home Assistant to simplify common smar
 2. Use the **Import Blueprint** button in each doc to add it to your Home Assistant
 3. Configure the automation using the detailed setup instructions provided
 
-## 📁 Repository Structure
-
-```text
-ha-blueprints/
-├── README.md                           # This file
-├── docs/                              # Documentation
-│   ├── pico_fan_control.md
-│   ├── bath_fan_automation.md
-│   └── moisture_sensor_notifications.md
-├── pico_fan_5_simple.yml              # Lutron Pico blueprint
-├── bath_fan.yml                       # Bath fan blueprint
-└── moisture_sensor_notifications.yml   # Moisture sensor blueprint
-```
-
 ## 🤝 Contributing
 
 Feel free to submit issues, fork the repository, and create pull requests for any improvements.
