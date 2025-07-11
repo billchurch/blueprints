@@ -105,18 +105,30 @@ blueprint:
       selector:
         boolean:
     tts_service:
-      name: TTS Service
-      description: Text-to-speech service to use (e.g., tts.google_say)
-      default: "tts.google_say"
+      name: TTS Service Provider
+      description: Select the text-to-speech service to use
+      default: []
       selector:
-        text:
+        entity:
+          filter:
+            domain: tts
     tts_targets:
-      name: TTS Target Speakers
+      name: TTS Media Players
       description: Media players for TTS announcements
       selector:
         entity:
           domain: media_player
           multiple: true
+    tts_message:
+      name: TTS Announcement Message
+      description: >
+        Custom TTS announcement message. Available variables:
+        {{ trigger.to_state.name }} - Sensor name
+        {{ area_name(trigger.entity_id) }} - Sensor area
+      default: "Alert! Moisture detected by {{ trigger.to_state.name }} in {{ area_name(trigger.entity_id) | default('Unknown Location', true) }}"
+      selector:
+        text:
+          multiline: true
 
 trigger:
   - platform: state
@@ -155,6 +167,7 @@ variables:
   enable_tts: !input enable_tts
   tts_service: !input tts_service
   tts_targets: !input tts_targets
+  tts_message: !input tts_message
 
 action:
   - variables:
@@ -215,12 +228,14 @@ action:
                 - choose:
                     - conditions:
                         - condition: template
-                          value_template: "{{ enable_tts and tts_targets | length > 0 }}"
+                          value_template: "{{ enable_tts and tts_targets | length > 0 and tts_service }}"
                       sequence:
-                        - service: "{{ tts_service }}"
+                        - action: tts.speak
+                          target:
+                            entity_id: "{{ tts_service }}"
                           data:
-                            entity_id: "{{ tts_targets }}"
-                            message: "{{ notification_message }}"
+                            media_player_entity_id: "{{ tts_targets }}"
+                            message: "{{ tts_message }}"
                 - delay:
                     minutes: "{{ repeat_interval }}"
     default:
@@ -245,12 +260,14 @@ action:
       - choose:
           - conditions:
               - condition: template
-                value_template: "{{ enable_tts and tts_targets | length > 0 }}"
+                value_template: "{{ enable_tts and tts_targets | length > 0 and tts_service }}"
             sequence:
-              - service: "{{ tts_service }}"
+              - action: tts.speak
+                target:
+                  entity_id: "{{ tts_service }}"
                 data:
-                  entity_id: "{{ tts_targets }}"
-                  message: "{{ notification_message }}"
+                  media_player_entity_id: "{{ tts_targets }}"
+                  message: "{{ tts_message }}"
 
 mode: parallel
 max: 10
