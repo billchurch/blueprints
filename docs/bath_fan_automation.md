@@ -6,7 +6,7 @@
 
 Smart bathroom exhaust fan control based on humidity levels with manual override support.
 
-<img width="1024" height="1024" alt="image" src="https://github.com/user-attachments/assets/b0e096cb-31ed-4720-8656-5a1506f2934e" />
+<img width="512" height="512" alt="image" src="https://github.com/user-attachments/assets/b0e096cb-31ed-4720-8656-5a1506f2934e" />
 
 ## 📥 Installation
 
