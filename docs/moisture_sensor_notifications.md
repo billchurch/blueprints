@@ -6,7 +6,7 @@
 
 Comprehensive water leak detection with multi-channel critical alerts including iOS notifications, TTS announcements, and persistent warnings.
 
-<img width="800" height="800" alt="image" src="https://github.com/user-attachments/assets/70c21669-444d-4108-84b1-5dcf8a767dbb" />
+<img width="512" height="512" alt="image" src="https://github.com/user-attachments/assets/70c21669-444d-4108-84b1-5dcf8a767dbb" />
 
 ## 📥 Installation
 
